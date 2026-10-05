@@ -64,6 +64,7 @@ export const StakeholderReportView: React.FC<StakeholderReportViewProps> = ({
       'Stakeholder',
       'Priority',
       'Assigned Team',
+      'Required Skills',
       'Effort (pts)',
       'WSJF Score',
       'Cost of Delay',
@@ -76,6 +77,7 @@ export const StakeholderReportView: React.FC<StakeholderReportViewProps> = ({
     const rows = prioritizedEpics.map(e => {
       const team = pi.teams.find(t => t.id === e.primaryTeamId)?.name || 'Unassigned';
       const pLabel = getPriorityLabel(e.stakeholderPriority).label;
+      const skillsStr = (e.requiredSkills || []).join('; ');
       return [
         `"${e.id}"`,
         `"${e.title.replace(/"/g, '""')}"`,
@@ -83,6 +85,7 @@ export const StakeholderReportView: React.FC<StakeholderReportViewProps> = ({
         `"${e.stakeholder}"`,
         `"${pLabel}"`,
         `"${team}"`,
+        `"${skillsStr}"`,
         e.effort,
         e.wsjfScore,
         e.costOfDelay,
@@ -132,8 +135,16 @@ ${stretchEpics.map(e => `- **${e.id}**: ${e.title} (${e.effort}p) — Triggered 
 ## Deferred Scope (Capacity Cut-Off)
 ${deferredEpics.map(e => `- **${e.id}**: ${e.title} (${e.effort}p) — Prioritized below cutoff; queued for next PI cycle.`).join('\n')}
 
-## Team Resource Allocation
-${capacityAnalysis.teamCapacities.map(t => `- **${t.teamName}**: ${t.committedPoints} / ${t.availableCapacity} pts (${t.utilizationPercent}% utilization)${t.isOverloaded ? ' [OVERLOAD WARNING]' : ''}`).join('\n')}
+## Team Resource Allocation & Skills Competency
+${capacityAnalysis.teamCapacities.map(t => {
+  const teamDef = pi.teams.find(tm => tm.id === t.teamId);
+  const skillsList = (teamDef?.skills || []).map(s => `${s.name} (${s.proficiency}, ${s.headcountWithSkill} devs)`).join(', ');
+  return `- **${t.teamName}**: ${t.committedPoints} / ${t.availableCapacity} pts (${t.utilizationPercent}% utilization)${t.isOverloaded ? ' [OVERLOAD WARNING]' : ''}
+  - Verified Skills: ${skillsList || 'None registered'}`;
+}).join('\n')}
+
+## Skill Demand & Bottleneck Register
+${capacityAnalysis.skillDemandAnalysis.filter(s => s.demandedPoints > 0).map(s => `- **${s.skillName}**: ${s.demandedPoints} pts across ${s.demandedEpicCount} epics · ${s.totalCapableEngineers} capable engineers${s.isBottleneck ? ' [SKILL BOTTLENECK]' : ''}`).join('\n')}
 `;
 
     const blob = new Blob([md], { type: 'text/markdown;charset=utf-8;' });
@@ -453,6 +464,44 @@ Strategic Goal: ${pi.strategicObjective}`;
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        {/* Section 6: Technical Skills Architecture & Bottlenecks */}
+        <div className="py-6 border-t border-slate-800 print:border-slate-300 space-y-4 print-break-inside-avoid">
+          <h2 className="text-base font-bold text-white print:text-slate-950 tracking-tight flex items-center gap-2">
+            <span className="font-mono text-cyan-400 print:text-blue-700">06.</span>
+            <span>Team Technical Skills & Competency Allocation</span>
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {pi.teams.map(team => (
+              <div key={team.id} className="bg-slate-950 print:bg-slate-50 border border-slate-800 print:border-slate-300 p-3.5 rounded-lg text-xs">
+                <div className="font-bold text-white print:text-slate-950 flex items-center justify-between pb-2 border-b border-slate-800 print:border-slate-200">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: team.color }} />
+                    <span>{team.name}</span>
+                  </div>
+                  <span className="text-[11px] font-mono text-slate-400 print:text-slate-600">
+                    {(team.skills || []).length} Verified Skills
+                  </span>
+                </div>
+
+                <div className="mt-2.5 space-y-1.5">
+                  {(team.skills || []).map(skill => (
+                    <div key={skill.name} className="flex items-center justify-between text-[11px] text-slate-300 print:text-slate-800">
+                      <span>{skill.name}</span>
+                      <span className="font-mono text-slate-400 print:text-slate-600">
+                        {skill.proficiency} ({skill.headcountWithSkill}/{team.members} devs)
+                      </span>
+                    </div>
+                  ))}
+                  {(team.skills || []).length === 0 && (
+                    <div className="text-[11px] text-slate-500 italic">No skills registered</div>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 

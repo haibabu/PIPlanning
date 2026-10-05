@@ -37,13 +37,21 @@ export const WhatIfSimulatorModal: React.FC<WhatIfSimulatorModalProps> = ({
   prioritizationMode,
   onApplyScenario
 }) => {
-  if (!isOpen) return null;
-
-  // Sandbox state
+  // Sandbox state - must always be called unconditionally
   const [simulatedDurationWeeks, setSimulatedDurationWeeks] = useState(pi.totalWeeks);
   const [simulatedBufferPercent, setSimulatedBufferPercent] = useState(pi.bufferReservePercent);
   const [simulatedStaffingDelta, setSimulatedStaffingDelta] = useState<number>(0);
   const [simulatedVelocityDeltaPercent, setSimulatedVelocityDeltaPercent] = useState<number>(0);
+
+  // Sync state whenever modal is opened
+  React.useEffect(() => {
+    if (isOpen) {
+      setSimulatedDurationWeeks(pi.totalWeeks);
+      setSimulatedBufferPercent(pi.bufferReservePercent);
+      setSimulatedStaffingDelta(0);
+      setSimulatedVelocityDeltaPercent(0);
+    }
+  }, [isOpen, pi.totalWeeks, pi.bufferReservePercent]);
 
   // Baseline calculation
   const baselinePrioritized = prioritizeEpics(epics, pi, prioritizationMode);
@@ -93,6 +101,8 @@ export const WhatIfSimulatorModal: React.FC<WhatIfSimulatorModalProps> = ({
     setSimulatedStaffingDelta(0);
     setSimulatedVelocityDeltaPercent(0);
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">

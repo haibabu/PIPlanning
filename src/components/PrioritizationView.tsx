@@ -55,6 +55,16 @@ export const PrioritizationView: React.FC<PrioritizationViewProps> = ({
   const [selectedTheme, setSelectedTheme] = useState<string>('all');
   const [selectedTeam, setSelectedTeam] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'committed' | 'stretch' | 'out_of_scope'>('all');
+  const [selectedSkill, setSelectedSkill] = useState<string>('all');
+
+  // Collect all unique skills across all epics
+  const allRequiredSkills = useMemo(() => {
+    const set = new Set<string>();
+    prioritizedEpics.forEach(e => {
+      (e.requiredSkills || []).forEach(s => set.add(s));
+    });
+    return Array.from(set).sort();
+  }, [prioritizedEpics]);
 
   // Filtered epics
   const filteredEpics = useMemo(() => {
@@ -62,15 +72,17 @@ export const PrioritizationView: React.FC<PrioritizationViewProps> = ({
       const matchesSearch = 
         epic.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         epic.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        epic.stakeholder.toLowerCase().includes(searchQuery.toLowerCase());
+        epic.stakeholder.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (epic.requiredSkills || []).some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
       
       const matchesTheme = selectedTheme === 'all' || epic.strategicTheme === selectedTheme;
       const matchesTeam = selectedTeam === 'all' || epic.primaryTeamId === selectedTeam;
       const matchesCategory = selectedCategory === 'all' || epic.executionCategory === selectedCategory;
+      const matchesSkill = selectedSkill === 'all' || (epic.requiredSkills || []).includes(selectedSkill);
 
-      return matchesSearch && matchesTheme && matchesTeam && matchesCategory;
+      return matchesSearch && matchesTheme && matchesTeam && matchesCategory && matchesSkill;
     });
-  }, [prioritizedEpics, searchQuery, selectedTheme, selectedTeam, selectedCategory]);
+  }, [prioritizedEpics, searchQuery, selectedTheme, selectedTeam, selectedCategory, selectedSkill]);
 
   // Find team by ID
   const getTeam = (id: string) => pi.teams.find(t => t.id === id);
@@ -91,13 +103,25 @@ export const PrioritizationView: React.FC<PrioritizationViewProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search epics by ID, title, or stakeholder..."
+            placeholder="Search epics by ID, title, stakeholder, or skill..."
             className="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
           />
         </div>
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-2">
+          {/* Skill Filter */}
+          <select
+            value={selectedSkill}
+            onChange={(e) => setSelectedSkill(e.target.value)}
+            className="bg-slate-950 border border-slate-800 text-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-cyan-500"
+          >
+            <option value="all">All Technical Skills</option>
+            {allRequiredSkills.map(skill => (
+              <option key={skill} value={skill}>{skill}</option>
+            ))}
+          </select>
+
           {/* Category Filter */}
           <select
             value={selectedCategory}
@@ -356,6 +380,29 @@ const EpicRowItem: React.FC<EpicRowItemProps> = ({
             <span>{epic.businessOutcome}</span>
           </div>
         )}
+
+        {/* Required Skills Chips & Skill Gap Warning */}
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] text-slate-500 font-mono">Skills:</span>
+          {(epic.requiredSkills || []).map(skill => (
+            <span 
+              key={skill}
+              className="text-[10px] bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800 text-slate-400 font-mono"
+            >
+              {skill}
+            </span>
+          ))}
+
+          {epic.missingSkills && epic.missingSkills.length > 0 && (
+            <span 
+              className="text-[10px] font-semibold bg-amber-950/70 text-amber-300 border border-amber-800/80 px-2 py-0.5 rounded flex items-center gap-1"
+              title={`Assigned team ${team?.name} is not registered with: ${epic.missingSkills.join(', ')}`}
+            >
+              <AlertCircle className="w-3 h-3 text-amber-400" />
+              <span>Skill Gap: {team?.name || 'Team'} lacks {epic.missingSkills.join(', ')}</span>
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Middle: WSJF Metrics & Team */}
@@ -393,25 +440,38 @@ const EpicRowItem: React.FC<EpicRowItemProps> = ({
         </div>
 
         {/* Effort & Quick Adjuster */}
-        <div className="min-w-[110px]">
+        <div className="min-w-[130px]">
           <div className="text-[10px] text-slate-400 uppercase tracking-wider">
             Effort ({pi.unit})
           </div>
-          <div className="flex items-center gap-1.5 mt-0.5">
+          <div className="flex items-center gap-1 mt-0.5">
             <button
-              onClick={() => onUpdateEffort(epic.id, Math.max(5, epic.effort - 5))}
-              className="w-5 h-5 rounded bg-slate-950 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-xs transition-colors"
-              title="De-scope -5 points"
+              onClick={() => onUpdateEffort(epic.id, Math.max(1, epic.effort - (epic.effort <= 5 ? 1 : 5)))}
+              className="w-5 h-6 rounded bg-slate-950 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-xs transition-colors border border-slate-800"
+              title="Decrease effort (down to 1)"
             >
               -
             </button>
-            <span className="font-mono font-bold text-sm text-white tabular-nums px-1">
-              {epic.effort}
-            </span>
+            <input
+              type="number"
+              min="1"
+              max="500"
+              value={epic.effort}
+              onChange={(e) => {
+                const val = parseInt(e.target.value, 10);
+                if (!isNaN(val) && val >= 1) {
+                  onUpdateEffort(epic.id, val);
+                } else if (e.target.value === '') {
+                  onUpdateEffort(epic.id, 1);
+                }
+              }}
+              className="w-14 text-center font-mono font-bold text-sm text-white bg-slate-950 border border-slate-800 focus:border-cyan-500 rounded py-0.5 px-1 tabular-nums focus:outline-none"
+              title="Type any effort value (minimum 1)"
+            />
             <button
-              onClick={() => onUpdateEffort(epic.id, epic.effort + 5)}
-              className="w-5 h-5 rounded bg-slate-950 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-xs transition-colors"
-              title="Add effort +5 points"
+              onClick={() => onUpdateEffort(epic.id, epic.effort + (epic.effort < 5 ? 1 : 5))}
+              className="w-5 h-6 rounded bg-slate-950 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-xs transition-colors border border-slate-800"
+              title="Increase effort"
             >
               +
             </button>

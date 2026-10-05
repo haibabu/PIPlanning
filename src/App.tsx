@@ -8,6 +8,7 @@ import {
 } from './types';
 import { 
   INITIAL_PI, 
+  INITIAL_TEAMS,
   INITIAL_EPICS, 
   INITIAL_COMPLETED_SPRINTS 
 } from './utils/defaultData';
@@ -26,16 +27,24 @@ import { WhatIfSimulatorModal } from './components/WhatIfSimulatorModal';
 import { EpicModal } from './components/EpicModal';
 import { RotateCcw, ShieldCheck } from 'lucide-react';
 
-const STORAGE_KEY_PI = 'apex_pi_data_v2';
-const STORAGE_KEY_EPICS = 'apex_epics_data_v2';
-const STORAGE_KEY_SPRINTS = 'apex_sprints_data_v2';
+const STORAGE_KEY_PI = 'apex_pi_data_v3';
+const STORAGE_KEY_EPICS = 'apex_epics_data_v3';
+const STORAGE_KEY_SPRINTS = 'apex_sprints_data_v3';
 
 export default function App() {
   // Load state from localStorage or default
   const [pi, setPi] = useState<ProgramIncrement>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_PI);
-      return saved ? JSON.parse(saved) : INITIAL_PI;
+      if (!saved) return INITIAL_PI;
+      const parsed = JSON.parse(saved);
+      if (parsed.teams) {
+        parsed.teams = parsed.teams.map((t: Team, idx: number) => ({
+          ...t,
+          skills: t.skills || INITIAL_TEAMS[idx]?.skills || []
+        }));
+      }
+      return parsed;
     } catch {
       return INITIAL_PI;
     }
@@ -44,7 +53,12 @@ export default function App() {
   const [epics, setEpics] = useState<Epic[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_EPICS);
-      return saved ? JSON.parse(saved) : INITIAL_EPICS;
+      if (!saved) return INITIAL_EPICS;
+      const parsed = JSON.parse(saved);
+      return parsed.map((e: Epic, idx: number) => ({
+        ...e,
+        requiredSkills: e.requiredSkills || INITIAL_EPICS.find(ie => ie.id === e.id)?.requiredSkills || []
+      }));
     } catch {
       return INITIAL_EPICS;
     }

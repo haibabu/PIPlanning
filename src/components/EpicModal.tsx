@@ -7,7 +7,8 @@ import {
   EpicStatus, 
   ProgramIncrement 
 } from '../types';
-import { X, Sparkles, Calculator, Check } from 'lucide-react';
+import { AVAILABLE_ART_SKILLS } from '../utils/defaultData';
+import { X, Sparkles, Calculator, Check, Tag, Plus } from 'lucide-react';
 
 interface EpicModalProps {
   isOpen: boolean;
@@ -24,8 +25,6 @@ export const EpicModal: React.FC<EpicModalProps> = ({
   editingEpic,
   pi
 }) => {
-  if (!isOpen) return null;
-
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [strategicTheme, setStrategicTheme] = useState<StrategicTheme>('Platform & Scale');
@@ -38,6 +37,8 @@ export const EpicModal: React.FC<EpicModalProps> = ({
   const [progressPercent, setProgressPercent] = useState<number>(0);
   const [businessOutcome, setBusinessOutcome] = useState('');
   const [confidenceLevel, setConfidenceLevel] = useState<ConfidenceLevel>('high');
+  const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
+  const [customSkillInput, setCustomSkillInput] = useState('');
 
   // WSJF Parameters
   const [userBusinessValue, setUserBusinessValue] = useState<number>(13);
@@ -58,6 +59,7 @@ export const EpicModal: React.FC<EpicModalProps> = ({
       setProgressPercent(editingEpic.progressPercent);
       setBusinessOutcome(editingEpic.businessOutcome || '');
       setConfidenceLevel(editingEpic.confidenceLevel);
+      setRequiredSkills(editingEpic.requiredSkills || []);
       setUserBusinessValue(editingEpic.wsjf.userBusinessValue);
       setTimeCriticality(editingEpic.wsjf.timeCriticality);
       setRiskReduction(editingEpic.wsjf.riskReduction);
@@ -75,6 +77,7 @@ export const EpicModal: React.FC<EpicModalProps> = ({
       setProgressPercent(0);
       setBusinessOutcome('');
       setConfidenceLevel('high');
+      setRequiredSkills([]);
       setUserBusinessValue(13);
       setTimeCriticality(8);
       setRiskReduction(8);
@@ -84,6 +87,22 @@ export const EpicModal: React.FC<EpicModalProps> = ({
   // Computed WSJF
   const costOfDelay = userBusinessValue + timeCriticality + riskReduction;
   const computedWSJF = Number((costOfDelay / Math.max(1, effort)).toFixed(2));
+
+  // Toggle skill inclusion
+  const handleToggleSkill = (skill: string) => {
+    setRequiredSkills(prev => 
+      prev.includes(skill) ? prev.filter(s => s !== skill) : [...prev, skill]
+    );
+  };
+
+  const handleAddCustomSkill = () => {
+    if (!customSkillInput.trim()) return;
+    const trimmed = customSkillInput.trim();
+    if (!requiredSkills.includes(trimmed)) {
+      setRequiredSkills(prev => [...prev, trimmed]);
+    }
+    setCustomSkillInput('');
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,6 +117,7 @@ export const EpicModal: React.FC<EpicModalProps> = ({
       stakeholderPriority,
       effort: Math.max(1, effort),
       primaryTeamId,
+      requiredSkills,
       targetIteration,
       status,
       progressPercent,
@@ -118,6 +138,8 @@ export const EpicModal: React.FC<EpicModalProps> = ({
   };
 
   const totalSprints = Math.max(1, Math.round(pi.totalWeeks / pi.iterationLengthWeeks));
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -249,6 +271,93 @@ export const EpicModal: React.FC<EpicModalProps> = ({
                   <option key={t.id} value={t.id}>{t.name}</option>
                 ))}
               </select>
+            </div>
+          </div>
+
+          {/* Required Technical Skills Section */}
+          <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-xl space-y-2.5">
+            <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
+              <label className="text-slate-200 font-semibold flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Required Team Technical Skills ({requiredSkills.length} selected)</span>
+              </label>
+              <span className="text-[10px] text-slate-400">Click to toggle required competencies</span>
+            </div>
+
+            {/* Selected Skills Chips */}
+            <div className="flex flex-wrap gap-1.5 min-h-[28px] items-center">
+              {requiredSkills.map(skill => (
+                <span
+                  key={skill}
+                  className="bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[11px] px-2 py-0.5 rounded-md flex items-center gap-1"
+                >
+                  <span>{skill}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleSkill(skill)}
+                    className="hover:text-white"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+              {requiredSkills.length === 0 && (
+                <span className="text-slate-500 text-[11px] italic">
+                  No technical skills assigned yet. Select from suggestions below or add custom.
+                </span>
+              )}
+            </div>
+
+            {/* Catalog quick-select chips */}
+            <div className="pt-2 border-t border-slate-800/80">
+              <div className="text-[10px] text-slate-400 uppercase font-mono tracking-wider mb-1.5">
+                Suggested ART Skills:
+              </div>
+              <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto pr-1">
+                {AVAILABLE_ART_SKILLS.map(s => {
+                  const isSelected = requiredSkills.includes(s.name);
+                  return (
+                    <button
+                      key={s.name}
+                      type="button"
+                      onClick={() => handleToggleSkill(s.name)}
+                      className={`text-[10px] px-2 py-0.5 rounded transition-colors ${
+                        isSelected
+                          ? 'bg-cyan-500 text-slate-950 font-bold'
+                          : 'bg-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800'
+                      }`}
+                    >
+                      {isSelected ? `✓ ${s.name}` : `+ ${s.name}`}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Custom Skill Input */}
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="text"
+                value={customSkillInput}
+                onChange={(e) => setCustomSkillInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddCustomSkill();
+                  }
+                }}
+                placeholder="Add custom required skill..."
+                className="flex-1 px-2.5 py-1 bg-slate-900 border border-slate-800 rounded text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+              />
+              <button
+                type="button"
+                onClick={handleAddCustomSkill}
+                disabled={!customSkillInput.trim()}
+                className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-cyan-300 rounded text-xs font-medium border border-slate-700 flex items-center gap-1"
+              >
+                <Plus className="w-3 h-3" />
+                <span>Add</span>
+              </button>
             </div>
           </div>
 

@@ -16,6 +16,16 @@ export type EpicStatus =
 
 export type ConfidenceLevel = 'high' | 'medium' | 'low';
 
+export type SkillProficiency = 'Expert' | 'Proficient' | 'Familiar';
+
+export interface TeamSkill {
+  id: string;
+  name: string;
+  category: string;
+  proficiency: SkillProficiency;
+  headcountWithSkill: number; // How many team members possess this skill
+}
+
 export interface WSJFData {
   userBusinessValue: number; // 1 - 20 (Fibonacci preferred: 1, 2, 3, 5, 8, 13, 20)
   timeCriticality: number;    // 1 - 20
@@ -33,6 +43,7 @@ export interface Epic {
   effort: number; // in Story Points or Person-Days
   primaryTeamId: string;
   secondaryTeamIds?: string[];
+  requiredSkills: string[]; // Skill names/IDs required to execute this Epic
   wsjf: WSJFData;
   targetIteration: number; // 1 to 5 (or totalIterations)
   status: EpicStatus;
@@ -52,6 +63,7 @@ export interface Team {
   ptoDays: number; // aggregate PTO/holiday days for team during PI
   historicalVelocity: number; // points per 2-week iteration
   leadRole: string;
+  skills: TeamSkill[]; // Skills and technical competencies of this team
 }
 
 export interface ProgramIncrement {
@@ -81,6 +93,22 @@ export interface PrioritizedEpic extends Epic {
   cumulativeEffort: number;
   executionCategory: 'committed' | 'stretch' | 'out_of_scope';
   rank: number;
+  missingSkills?: string[]; // Skills required by the Epic that the assigned team lacks
+}
+
+export interface SkillDemandAnalysis {
+  skillName: string;
+  category: string;
+  demandedPoints: number; // Total points across committed epics requiring this skill
+  demandedEpicCount: number;
+  capableTeams: {
+    teamId: string;
+    teamName: string;
+    headcount: number;
+    proficiency: SkillProficiency;
+  }[];
+  totalCapableEngineers: number;
+  isBottleneck: boolean; // True if demand is high relative to available engineers
 }
 
 export interface CapacityAnalysis {
@@ -101,7 +129,9 @@ export interface CapacityAnalysis {
     committedPoints: number;
     utilizationPercent: number;
     isOverloaded: boolean;
+    skillCount: number;
   }[];
+  skillDemandAnalysis: SkillDemandAnalysis[];
 }
 
 export interface SprintProgressRecord {
@@ -113,3 +143,4 @@ export interface SprintProgressRecord {
   status: 'completed' | 'in_progress' | 'upcoming';
   notes: string;
 }
+

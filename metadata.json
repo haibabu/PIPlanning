@@ -2,5 +2,7 @@
   "name": "PI Capacity & Epic Scope Planner",
   "description": "Agile Program Increment (PI) capacity planner and automated epic prioritizer for Product Owners. Calculate PI epic execution limits, optimize WSJF stakeholder priorities against team velocity, and export executive progress reports.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

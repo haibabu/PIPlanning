@@ -60,7 +60,8 @@ export function calculateCapacityAnalysis(
       availableCapacity,
       committedPoints,
       utilizationPercent,
-      isOverloaded: utilizationPercent > 105
+      isOverloaded: utilizationPercent > 105,
+      skillCount: team.skills ? team.skills.length : 0
     };
   });
 
@@ -88,6 +89,71 @@ export function calculateCapacityAnalysis(
     ? Math.round((totalCommittedPoints / artNetCapacity) * 100) 
     : 0;
 
+  // Calculate Skill Demand & Supply Analysis
+  const allSkillsMap = new Map<string, {
+    category: string;
+    demandedPoints: number;
+    demandedEpicCount: number;
+  }>();
+
+  // Seed from teams' registered skills
+  pi.teams.forEach(team => {
+    (team.skills || []).forEach(s => {
+      if (!allSkillsMap.has(s.name)) {
+        allSkillsMap.set(s.name, {
+          category: s.category || 'General Technical',
+          demandedPoints: 0,
+          demandedEpicCount: 0
+        });
+      }
+    });
+  });
+
+  // Calculate demand from committed epics
+  prioritizedEpics
+    .filter(e => e.executionCategory === 'committed')
+    .forEach(epic => {
+      (epic.requiredSkills || []).forEach(skillName => {
+        const existing = allSkillsMap.get(skillName) || {
+          category: 'Domain & Architecture',
+          demandedPoints: 0,
+          demandedEpicCount: 0
+        };
+        existing.demandedPoints += epic.effort;
+        existing.demandedEpicCount += 1;
+        allSkillsMap.set(skillName, existing);
+      });
+    });
+
+  const skillDemandAnalysis = Array.from(allSkillsMap.entries()).map(([skillName, data]) => {
+    const capableTeams = pi.teams
+      .filter(t => (t.skills || []).some(s => s.name.toLowerCase() === skillName.toLowerCase()))
+      .map(t => {
+        const found = t.skills.find(s => s.name.toLowerCase() === skillName.toLowerCase());
+        return {
+          teamId: t.id,
+          teamName: t.name,
+          headcount: found?.headcountWithSkill || Math.max(1, Math.round(t.members * 0.6)),
+          proficiency: found?.proficiency || 'Proficient'
+        };
+      });
+
+    const totalCapableEngineers = capableTeams.reduce((sum, ct) => sum + ct.headcount, 0);
+    // Flag as bottleneck if demanded points > 60 and headcount <= 3, or if demanded > 0 and 0 capable engineers
+    const isBottleneck = (data.demandedPoints > 0 && totalCapableEngineers === 0) || 
+      (data.demandedPoints >= 55 && totalCapableEngineers <= 3);
+
+    return {
+      skillName,
+      category: data.category,
+      demandedPoints: data.demandedPoints,
+      demandedEpicCount: data.demandedEpicCount,
+      capableTeams,
+      totalCapableEngineers,
+      isBottleneck
+    };
+  }).sort((a, b) => b.demandedPoints - a.demandedPoints);
+
   return {
     artGrossCapacity,
     artNetCapacity,
@@ -98,7 +164,8 @@ export function calculateCapacityAnalysis(
     stretchEpicCount,
     deferredEpicCount,
     artUtilizationPercent,
-    teamCapacities
+    teamCapacities,
+    skillDemandAnalysis
   };
 }
 
@@ -203,11 +270,19 @@ export function prioritizeEpics(
       category = 'out_of_scope';
     }
 
+    // Check if assigned team has the required skills
+    const assignedTeam = pi.teams.find(t => t.id === epic.primaryTeamId);
+    const teamSkillNames = (assignedTeam?.skills || []).map(s => s.name.toLowerCase());
+    const missingSkills = (epic.requiredSkills || []).filter(
+      req => !teamSkillNames.includes(req.toLowerCase())
+    );
+
     return {
       ...epic,
       rank: idx + 1,
       cumulativeEffort: runningEffort,
-      executionCategory: category
+      executionCategory: category,
+      missingSkills: missingSkills.length > 0 ? missingSkills : undefined
     };
   });
 }

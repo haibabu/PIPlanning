@@ -1,4 +1,25 @@
-import { ProgramIncrement, Epic, Team } from '../types';
+import { ProgramIncrement, Epic, Team, TeamSkill } from '../types';
+
+export const AVAILABLE_ART_SKILLS: { name: string; category: string }[] = [
+  { name: 'Kubernetes & Container Orchestration', category: 'Cloud & Infrastructure' },
+  { name: 'Multi-Region Database & Raft Consensus', category: 'Backend & Distributed Systems' },
+  { name: 'Golang & High-Throughput APIs', category: 'Backend & Distributed Systems' },
+  { name: 'Edge Caching & Envoy / Gateway API', category: 'Cloud & Infrastructure' },
+  { name: 'Terraform & Cloud Infrastructure', category: 'Cloud & Infrastructure' },
+  { name: 'React, Next.js & TypeScript', category: 'Frontend & Mobile' },
+  { name: 'Payment Gateways & Localized Currencies', category: 'Backend & Distributed Systems' },
+  { name: 'Mobile PWA & Web Vitals Optimization', category: 'Frontend & Mobile' },
+  { name: 'Subscription Billing & Stripe Engine', category: 'Backend & Distributed Systems' },
+  { name: 'Micro-Frontends & Module Federation', category: 'Frontend & Mobile' },
+  { name: 'Kafka & Event Stream Pipelines', category: 'Data & AI / ML' },
+  { name: 'Real-Time Analytics & ClickHouse', category: 'Data & AI / ML' },
+  { name: 'Machine Learning & Fraud Anomaly Detection', category: 'Data & AI / ML' },
+  { name: 'ETL & ERP Inventory Sync Connectors', category: 'Data & AI / ML' },
+  { name: 'SAML 2.0, SCIM & Enterprise SSO', category: 'Security & Compliance' },
+  { name: 'SOC2 Type II Automated Compliance Audit', category: 'Security & Compliance' },
+  { name: 'Application Security & Cryptography', category: 'Security & Compliance' },
+  { name: 'GDPR & PII Redaction Vaults', category: 'Security & Compliance' }
+];
 
 export const INITIAL_TEAMS: Team[] = [
   {
@@ -9,7 +30,14 @@ export const INITIAL_TEAMS: Team[] = [
     focusFactor: 80,
     ptoDays: 8,
     historicalVelocity: 75,
-    leadRole: 'Staff Infrastructure Architect'
+    leadRole: 'Staff Infrastructure Architect',
+    skills: [
+      { id: 'sk-k8s', name: 'Kubernetes & Container Orchestration', category: 'Cloud & Infrastructure', proficiency: 'Expert', headcountWithSkill: 5 },
+      { id: 'sk-raft', name: 'Multi-Region Database & Raft Consensus', category: 'Backend & Distributed Systems', proficiency: 'Expert', headcountWithSkill: 4 },
+      { id: 'sk-go', name: 'Golang & High-Throughput APIs', category: 'Backend & Distributed Systems', proficiency: 'Expert', headcountWithSkill: 6 },
+      { id: 'sk-edge', name: 'Edge Caching & Envoy / Gateway API', category: 'Cloud & Infrastructure', proficiency: 'Proficient', headcountWithSkill: 4 },
+      { id: 'sk-tf', name: 'Terraform & Cloud Infrastructure', category: 'Cloud & Infrastructure', proficiency: 'Expert', headcountWithSkill: 5 }
+    ]
   },
   {
     id: 'team-commerce',
@@ -19,7 +47,14 @@ export const INITIAL_TEAMS: Team[] = [
     focusFactor: 75,
     ptoDays: 6,
     historicalVelocity: 65,
-    leadRole: 'Principal UX & Systems Eng'
+    leadRole: 'Principal UX & Systems Eng',
+    skills: [
+      { id: 'sk-react', name: 'React, Next.js & TypeScript', category: 'Frontend & Mobile', proficiency: 'Expert', headcountWithSkill: 5 },
+      { id: 'sk-payments', name: 'Payment Gateways & Localized Currencies', category: 'Backend & Distributed Systems', proficiency: 'Expert', headcountWithSkill: 4 },
+      { id: 'sk-pwa', name: 'Mobile PWA & Web Vitals Optimization', category: 'Frontend & Mobile', proficiency: 'Proficient', headcountWithSkill: 3 },
+      { id: 'sk-billing', name: 'Subscription Billing & Stripe Engine', category: 'Backend & Distributed Systems', proficiency: 'Proficient', headcountWithSkill: 3 },
+      { id: 'sk-mfe', name: 'Micro-Frontends & Module Federation', category: 'Frontend & Mobile', proficiency: 'Proficient', headcountWithSkill: 2 }
+    ]
   },
   {
     id: 'team-data',
@@ -29,7 +64,13 @@ export const INITIAL_TEAMS: Team[] = [
     focusFactor: 75,
     ptoDays: 5,
     historicalVelocity: 60,
-    leadRole: 'Lead Distributed Systems Eng'
+    leadRole: 'Lead Distributed Systems Eng',
+    skills: [
+      { id: 'sk-kafka', name: 'Kafka & Event Stream Pipelines', category: 'Data & AI / ML', proficiency: 'Expert', headcountWithSkill: 5 },
+      { id: 'sk-clickhouse', name: 'Real-Time Analytics & ClickHouse', category: 'Data & AI / ML', proficiency: 'Expert', headcountWithSkill: 4 },
+      { id: 'sk-ml', name: 'Machine Learning & Fraud Anomaly Detection', category: 'Data & AI / ML', proficiency: 'Proficient', headcountWithSkill: 3 },
+      { id: 'sk-etl', name: 'ETL & ERP Inventory Sync Connectors', category: 'Data & AI / ML', proficiency: 'Proficient', headcountWithSkill: 4 }
+    ]
   },
   {
     id: 'team-security',
@@ -39,7 +80,13 @@ export const INITIAL_TEAMS: Team[] = [
     focusFactor: 85,
     ptoDays: 4,
     historicalVelocity: 48,
-    leadRole: 'Principal Security Specialist'
+    leadRole: 'Principal Security Specialist',
+    skills: [
+      { id: 'sk-saml', name: 'SAML 2.0, SCIM & Enterprise SSO', category: 'Security & Compliance', proficiency: 'Expert', headcountWithSkill: 4 },
+      { id: 'sk-soc2', name: 'SOC2 Type II Automated Compliance Audit', category: 'Security & Compliance', proficiency: 'Expert', headcountWithSkill: 3 },
+      { id: 'sk-appsec', name: 'Application Security & Cryptography', category: 'Security & Compliance', proficiency: 'Expert', headcountWithSkill: 4 },
+      { id: 'sk-gdpr', name: 'GDPR & PII Redaction Vaults', category: 'Security & Compliance', proficiency: 'Proficient', headcountWithSkill: 3 }
+    ]
   }
 ];
 
@@ -67,6 +114,7 @@ export const INITIAL_EPICS: Epic[] = [
     stakeholderPriority: 1, // P0
     effort: 55,
     primaryTeamId: 'team-platform',
+    requiredSkills: ['Multi-Region Database & Raft Consensus', 'Kubernetes & Container Orchestration', 'Golang & High-Throughput APIs'],
     wsjf: {
       userBusinessValue: 20,
       timeCriticality: 13,
@@ -89,6 +137,7 @@ export const INITIAL_EPICS: Epic[] = [
     stakeholderPriority: 1, // P0
     effort: 48,
     primaryTeamId: 'team-commerce',
+    requiredSkills: ['Payment Gateways & Localized Currencies', 'React, Next.js & TypeScript'],
     wsjf: {
       userBusinessValue: 20,
       timeCriticality: 20,
@@ -111,6 +160,7 @@ export const INITIAL_EPICS: Epic[] = [
     stakeholderPriority: 1, // P0
     effort: 34,
     primaryTeamId: 'team-security',
+    requiredSkills: ['SOC2 Type II Automated Compliance Audit', 'Application Security & Cryptography'],
     wsjf: {
       userBusinessValue: 13,
       timeCriticality: 20,
@@ -133,6 +183,7 @@ export const INITIAL_EPICS: Epic[] = [
     stakeholderPriority: 2, // P1
     effort: 42,
     primaryTeamId: 'team-data',
+    requiredSkills: ['Kafka & Event Stream Pipelines', 'Real-Time Analytics & ClickHouse'],
     wsjf: {
       userBusinessValue: 13,
       timeCriticality: 8,
@@ -155,6 +206,7 @@ export const INITIAL_EPICS: Epic[] = [
     stakeholderPriority: 1, // P0
     effort: 28,
     primaryTeamId: 'team-security',
+    requiredSkills: ['SAML 2.0, SCIM & Enterprise SSO', 'Application Security & Cryptography'],
     wsjf: {
       userBusinessValue: 13,
       timeCriticality: 13,
@@ -177,6 +229,7 @@ export const INITIAL_EPICS: Epic[] = [
     stakeholderPriority: 2, // P1
     effort: 38,
     primaryTeamId: 'team-platform',
+    requiredSkills: ['Edge Caching & Envoy / Gateway API', 'Golang & High-Throughput APIs'],
     wsjf: {
       userBusinessValue: 13,
       timeCriticality: 8,
@@ -199,6 +252,7 @@ export const INITIAL_EPICS: Epic[] = [
     stakeholderPriority: 2, // P1
     effort: 45,
     primaryTeamId: 'team-commerce',
+    requiredSkills: ['Subscription Billing & Stripe Engine', 'Payment Gateways & Localized Currencies'],
     wsjf: {
       userBusinessValue: 13,
       timeCriticality: 13,
@@ -221,6 +275,7 @@ export const INITIAL_EPICS: Epic[] = [
     stakeholderPriority: 2, // P1
     effort: 40,
     primaryTeamId: 'team-data',
+    requiredSkills: ['Machine Learning & Fraud Anomaly Detection', 'Kafka & Event Stream Pipelines'],
     wsjf: {
       userBusinessValue: 8,
       timeCriticality: 8,
@@ -243,6 +298,7 @@ export const INITIAL_EPICS: Epic[] = [
     stakeholderPriority: 2, // P1
     effort: 24,
     primaryTeamId: 'team-commerce',
+    requiredSkills: ['Mobile PWA & Web Vitals Optimization', 'React, Next.js & TypeScript'],
     wsjf: {
       userBusinessValue: 8,
       timeCriticality: 8,
@@ -265,6 +321,7 @@ export const INITIAL_EPICS: Epic[] = [
     stakeholderPriority: 3, // P2
     effort: 32,
     primaryTeamId: 'team-platform',
+    requiredSkills: ['Kubernetes & Container Orchestration', 'Terraform & Cloud Infrastructure'],
     wsjf: {
       userBusinessValue: 8,
       timeCriticality: 5,
@@ -287,6 +344,7 @@ export const INITIAL_EPICS: Epic[] = [
     stakeholderPriority: 3, // P2
     effort: 52,
     primaryTeamId: 'team-data',
+    requiredSkills: ['ETL & ERP Inventory Sync Connectors', 'Kafka & Event Stream Pipelines'],
     wsjf: {
       userBusinessValue: 8,
       timeCriticality: 5,
@@ -309,6 +367,7 @@ export const INITIAL_EPICS: Epic[] = [
     stakeholderPriority: 3, // P2
     effort: 46,
     primaryTeamId: 'team-platform',
+    requiredSkills: ['Golang & High-Throughput APIs', 'Multi-Region Database & Raft Consensus'],
     wsjf: {
       userBusinessValue: 5,
       timeCriticality: 3,
@@ -331,6 +390,7 @@ export const INITIAL_EPICS: Epic[] = [
     stakeholderPriority: 3, // P2
     effort: 36,
     primaryTeamId: 'team-security',
+    requiredSkills: ['GDPR & PII Redaction Vaults', 'Application Security & Cryptography'],
     wsjf: {
       userBusinessValue: 5,
       timeCriticality: 5,
@@ -353,6 +413,7 @@ export const INITIAL_EPICS: Epic[] = [
     stakeholderPriority: 4, // P3
     effort: 58,
     primaryTeamId: 'team-commerce',
+    requiredSkills: ['Micro-Frontends & Module Federation', 'React, Next.js & TypeScript'],
     wsjf: {
       userBusinessValue: 5,
       timeCriticality: 2,
