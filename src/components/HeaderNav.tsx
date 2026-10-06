@@ -7,7 +7,9 @@ import {
   Layers, 
   TrendingUp, 
   Users, 
-  FileText
+  FileText,
+  Compass,
+  Network
 } from 'lucide-react';
 
 interface HeaderNavProps {
@@ -18,6 +20,9 @@ interface HeaderNavProps {
   onExportReport: () => void;
   committedCount: number;
   totalCount: number;
+  showGuide?: boolean;
+  onToggleGuide?: () => void;
+  onOpenArchitecture?: () => void;
 }
 
 export const HeaderNav: React.FC<HeaderNavProps> = ({
@@ -27,7 +32,10 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
   onOpenWhatIf,
   onExportReport,
   committedCount,
-  totalCount
+  totalCount,
+  showGuide,
+  onToggleGuide,
+  onOpenArchitecture
 }) => {
   return (
     <header className="no-print sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 px-4 lg:px-8 py-3.5 transition-all">
@@ -126,6 +134,32 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
 
         {/* Zone 3: Primary Actions */}
         <div className="hidden md:flex items-center gap-2.5 shrink-0">
+          {onToggleGuide && (
+            <button
+              onClick={onToggleGuide}
+              className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 border shadow-xs ${
+                showGuide
+                  ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40 font-semibold'
+                  : 'text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 border-slate-750'
+              }`}
+              title="First-Time User Guide & Walkthrough"
+            >
+              <Compass className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Guide</span>
+            </button>
+          )}
+
+          {onOpenArchitecture && (
+            <button
+              onClick={onOpenArchitecture}
+              className="px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-750 rounded-md transition-colors flex items-center gap-1.5 shadow-xs"
+              title="View Interactive System Architecture Diagram"
+            >
+              <Network className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Architecture</span>
+            </button>
+          )}
+
           <button
             onClick={onOpenWhatIf}
             className="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-700/60 rounded-md transition-colors flex items-center gap-1.5 shadow-xs"

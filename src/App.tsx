@@ -25,11 +25,14 @@ import { TeamAllocationView } from './components/TeamAllocationView';
 import { StakeholderReportView } from './components/StakeholderReportView';
 import { WhatIfSimulatorModal } from './components/WhatIfSimulatorModal';
 import { EpicModal } from './components/EpicModal';
-import { RotateCcw, ShieldCheck } from 'lucide-react';
+import { WelcomeGuideBanner } from './components/WelcomeGuideBanner';
+import { ArchitectureModal } from './components/ArchitectureModal';
+import { RotateCcw, ShieldCheck, Compass, Network } from 'lucide-react';
 
 const STORAGE_KEY_PI = 'apex_pi_data_v3';
 const STORAGE_KEY_EPICS = 'apex_epics_data_v3';
 const STORAGE_KEY_SPRINTS = 'apex_sprints_data_v3';
+const STORAGE_KEY_SEEN_WELCOME = 'apex_seen_welcome_v1';
 
 export default function App() {
   // Load state from localStorage or default
@@ -80,6 +83,30 @@ export default function App() {
   const [isEpicModalOpen, setIsEpicModalOpen] = useState(false);
   const [editingEpic, setEditingEpic] = useState<Epic | null>(null);
   const [isWhatIfOpen, setIsWhatIfOpen] = useState(false);
+  const [isArchitectureOpen, setIsArchitectureOpen] = useState(false);
+
+  // Welcome Guide State (first-time users see it by default)
+  const [showWelcomeGuide, setShowWelcomeGuide] = useState<boolean>(() => {
+    try {
+      const dismissed = localStorage.getItem(STORAGE_KEY_SEEN_WELCOME);
+      return dismissed !== 'true';
+    } catch {
+      return true;
+    }
+  });
+
+  const handleDismissWelcome = () => {
+    setShowWelcomeGuide(false);
+    try {
+      localStorage.setItem(STORAGE_KEY_SEEN_WELCOME, 'true');
+    } catch (e) {
+      console.warn('LocalStorage error:', e);
+    }
+  };
+
+  const handleToggleWelcome = () => {
+    setShowWelcomeGuide(prev => !prev);
+  };
 
   // Sync with localStorage
   useEffect(() => {
@@ -209,10 +236,26 @@ export default function App() {
         onExportReport={() => setActiveTab('report')}
         committedCount={capacityAnalysis.committedEpicCount}
         totalCount={epics.length}
+        showGuide={showWelcomeGuide}
+        onToggleGuide={handleToggleWelcome}
+        onOpenArchitecture={() => setIsArchitectureOpen(true)}
       />
 
       {/* Main Workspace */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 space-y-6">
+        {/* Welcome Guide for First-Time Users */}
+        {showWelcomeGuide && (
+          <WelcomeGuideBanner
+            onDismiss={handleDismissWelcome}
+            onNavigateTab={setActiveTab}
+            onOpenWhatIf={() => setIsWhatIfOpen(true)}
+            onOpenNewEpic={() => {
+              setEditingEpic(null);
+              setIsEpicModalOpen(true);
+            }}
+          />
+        )}
+
         {/* Top Capacity Summary Banner (Answers "How Many Epics Can Be Executed?") */}
         <div className="no-print">
           <CapacitySummaryBanner
@@ -298,6 +341,24 @@ export default function App() {
 
           <div className="flex items-center gap-4">
             <button
+              onClick={handleToggleWelcome}
+              className="text-slate-400 hover:text-cyan-300 transition-colors flex items-center gap-1.5"
+              title="Open First-Time User Guide & Walkthrough"
+            >
+              <Compass className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Getting Started Guide</span>
+            </button>
+            <span aria-hidden="true">·</span>
+            <button
+              onClick={() => setIsArchitectureOpen(true)}
+              className="text-slate-400 hover:text-cyan-300 transition-colors flex items-center gap-1.5"
+              title="Open System Architecture Diagram"
+            >
+              <Network className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Architecture</span>
+            </button>
+            <span aria-hidden="true">·</span>
+            <button
               onClick={handleResetToDefaults}
               className="text-slate-400 hover:text-slate-200 transition-colors flex items-center gap-1"
               title="Reset all sample data"
@@ -333,6 +394,12 @@ export default function App() {
         epics={epics}
         prioritizationMode={prioritizationMode}
         onApplyScenario={handleApplyScenario}
+      />
+
+      {/* Architecture Diagram Modal */}
+      <ArchitectureModal
+        isOpen={isArchitectureOpen}
+        onClose={() => setIsArchitectureOpen(false)}
       />
     </div>
   );
